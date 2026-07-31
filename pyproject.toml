@@ -1,0 +1,50 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "gstinapi"
+version = "1.0.0"
+description = "GSTIN verification for Python — look up any Indian GST number and get the legal name, status, taxpayer type and registered address."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+authors = [{ name = "gstinapi.in", email = "help@gstinapi.in" }]
+keywords = [
+    "gstin",
+    "gst",
+    "gst-verification",
+    "gstin-verification",
+    "gst-search",
+    "gst-api",
+    "india",
+    "tax",
+    "compliance",
+    "einvoice",
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Office/Business :: Financial :: Accounting",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Typing :: Typed",
+]
+dependencies = []
+
+[project.urls]
+Homepage = "https://www.gstinapi.in"
+Documentation = "https://www.gstinapi.in/docs"
+Source = "https://github.com/CsoftTarun/gstinapi-python"
+Issues = "https://github.com/CsoftTarun/gstinapi-python/issues"
+
+[tool.setuptools.packages.find]
+include = ["gstinapi*"]
+
+[tool.setuptools.package-data]
+gstinapi = ["py.typed"]
