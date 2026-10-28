@@ -176,6 +176,9 @@ The API key is a credential: anyone holding it can spend your credits. Read it f
 - [API documentation](https://www.gstinapi.in/docs)
 - [Free GST number search](https://www.gstinapi.in/gst-number-search)
 - [Pricing](https://www.gstinapi.in/pricing)
+- [E-way bill and e-invoice API](https://www.gstinapi.in/e-way-bill-api): every call explained, with [error codes](https://www.gstinapi.in/e-way-bill-api-errors)
+- [GSTR-2B and GSTR-2A API](https://www.gstinapi.in/gst-return-api): the ITC statement and the 12 GSTR-2A tables as JSON
+- [GST vendor monitoring](https://www.gstinapi.in/gst-vendor-monitoring) and [bulk GSTIN verification](https://www.gstinapi.in/bulk-gstin-verification)
 
 ## License
 
