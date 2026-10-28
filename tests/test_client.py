@@ -144,3 +144,36 @@ class TestClient(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestInclude(unittest.TestCase):
+    def test_include_profile_is_passed_through(self):
+        payload = {"success": True, "profile_complete": True, "data": {}}
+        client = GstinApi(api_key="gak_x")
+        with patch("urllib.request.urlopen", side_effect=ok(payload)) as mock:
+            result = client.lookup(VALID, include="profile")
+        self.assertTrue(mock.call_args[0][0].full_url.endswith(f"/v1/gstin/{VALID}?include=profile"))
+        self.assertTrue(result["profile_complete"])
+
+    def test_unknown_include_never_hits_network(self):
+        client = GstinApi(api_key="gak_x")
+        with patch("urllib.request.urlopen") as mock:
+            with self.assertRaises(ValueError):
+                client.lookup(VALID, include="profiel")
+            mock.assert_not_called()
+
+    def test_lookup_many_forwards_include(self):
+        client = GstinApi(api_key="gak_x")
+        with patch("urllib.request.urlopen", side_effect=ok({"success": True})) as mock:
+            results = client.lookup_many([VALID, VALID], include="profile")
+        self.assertTrue(all(r.ok for r in results))
+        urls = [c[0][0].full_url for c in mock.call_args_list]
+        self.assertEqual(len(urls), 2)
+        self.assertTrue(all(u.endswith("?include=profile") for u in urls))
+
+    def test_lookup_many_rejects_unknown_include_up_front(self):
+        client = GstinApi(api_key="gak_x")
+        with patch("urllib.request.urlopen") as mock:
+            with self.assertRaises(ValueError):
+                client.lookup_many([VALID], include="all")
+            mock.assert_not_called()

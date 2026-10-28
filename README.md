@@ -23,7 +23,7 @@ print(result["data"]["status"])       # Active
 print(result["credits_remaining"])    # 9
 ```
 
-Get an API key at [gstinapi.in/register](https://www.gstinapi.in/register) — new accounts include 10 free lookups, no card required.
+Get an API key at [gstinapi.in/register](https://www.gstinapi.in/register) — every account gets up to 100 free lookups, no card required.
 
 ## Why use this instead of calling the API directly
 
@@ -68,6 +68,31 @@ except GstinError as exc:
 | `NotFound` | 404 | GSTIN is not in the GST database. |
 | `RateLimited` | 429 | Over 60 requests/minute. Retried automatically. |
 | `ProviderUnavailable` | 502 | Upstream GST network hiccup. Retried automatically. |
+
+## Taxpayer profile (`include="profile"`)
+
+Pass `include="profile"` to get the taxpayer's profile in the same call, at no extra credit:
+
+```python
+result = client.lookup("33AAACC1206D1ZN", include="profile")
+data = result["data"]
+
+data["business_constitution"]    # constitution of business
+data["state_jurisdiction"]       # state jurisdiction (and _code)
+data["centre_jurisdiction"]      # centre jurisdiction (and _code)
+data["nature_of_business"]       # list of activities at the principal place
+data["einvoice_status"]          # "Yes" | "No"
+data["last_updated"]             # date the GST network last updated the record
+data["additional_addresses"]     # additional places of business
+data["address_details"]["city"]  # district and city are filled only with the profile
+result["profile_complete"]       # False = lookup succeeded, profile could not be fetched
+```
+
+The profile is best-effort: if it cannot be fetched, the lookup still succeeds, the profile fields come back `None` and `profile_complete` is `False`. It works with bulk lookups too:
+
+```python
+client.lookup_many(gstins, concurrency=5, include="profile")
+```
 
 ## Bulk lookups
 
@@ -128,7 +153,7 @@ GstinApi(
 }
 ```
 
-`business_constitution`, `state_jurisdiction` and `nature_of_business` are currently always `None` — the keys are stable, but don't build logic on their values.
+`business_constitution`, `state_jurisdiction` and `nature_of_business` are usually `None` on a plain lookup. Pass `include="profile"` (see above) to have them filled.
 
 ## Working with pandas
 

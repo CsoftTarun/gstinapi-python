@@ -12,9 +12,24 @@ from dataclasses import dataclass
 from typing import Any, Iterable
 
 BASE_URL = "https://www.gstinapi.in"
-USER_AGENT = "gstinapi-python/1.0.0 (+https://www.gstinapi.in)"
+USER_AGENT = "gstinapi-python/1.1.0 (+https://www.gstinapi.in)"
 GSTIN_RE = re.compile(r"^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$")
 _ALPHABET = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+
+# Values the API understands for ?include=. Checked locally because the API
+# ignores an unknown value: a typo would otherwise come back as a plain lookup,
+# charged, with the extra fields silently missing.
+INCLUDE_VALUES = ("profile",)
+
+
+def _include_query(include: str | None) -> str:
+    if include is None:
+        return ""
+    if include not in INCLUDE_VALUES:
+        allowed = ", ".join(repr(v) for v in INCLUDE_VALUES)
+        raise ValueError(f"include must be one of: {allowed}")
+    return f"?include={include}"
+
 
 # Only these are worth repeating. A 402 will not become a 200 by asking again.
 _RETRYABLE = frozenset({429, 502})
@@ -178,35 +193,47 @@ class GstinApi:
             except urllib.error.URLError as exc:
                 raise GstinError(f"Network error: {exc.reason}", status=None) from None
 
-    def lookup(self, gstin: str) -> dict:
+    def lookup(self, gstin: str, *, include: str | None = None) -> dict:
         """Look up one GSTIN.
 
         Returns the full payload: ``success``, ``gstin``, ``data``,
         ``credits_remaining`` and ``response_ms``.
+
+        ``include="profile"`` adds the taxpayer profile (constitution,
+        jurisdictions, nature of business, e-invoice status, additional places
+        of business) at no extra credit, and a ``profile_complete`` flag that
+        is ``False`` when the lookup succeeded but the profile could not be
+        fetched.
         """
         if not isinstance(gstin, str) or not gstin.strip():
             raise TypeError("gstin must be a non-empty string")
+        query = _include_query(include)
         value = gstin.strip().upper()
         if not is_valid_gstin(value, checksum=self.validate_checksum):
             raise InvalidFormat(f'"{value}" is not a valid GSTIN', status=400)
-        return self._request(f"/v1/gstin/{value}")
+        return self._request(f"/v1/gstin/{value}{query}")
 
     def usage(self) -> dict:
         """Today's usage for this key. Does not consume a credit."""
         return self._request("/v1/gstin/stats/me")
 
-    def lookup_many(self, gstins: Iterable[str], *, concurrency: int = 5) -> list[BatchResult]:
+    def lookup_many(
+        self, gstins: Iterable[str], *, concurrency: int = 5, include: str | None = None
+    ) -> list[BatchResult]:
         """Look up many GSTINs, settling each independently.
 
         One bad number never sinks the batch — check ``.ok`` on each result.
+        ``include`` is passed to every lookup (see :meth:`lookup`).
         """
+        # Fail the whole call up front on a bad include, rather than once per row.
+        _include_query(include)
         items = list(gstins)
         if not items:
             return []
 
         def run(gstin: str) -> BatchResult:
             try:
-                return BatchResult(gstin=gstin, ok=True, data=self.lookup(gstin))
+                return BatchResult(gstin=gstin, ok=True, data=self.lookup(gstin, include=include))
             except GstinError as exc:
                 return BatchResult(gstin=gstin, ok=False, error=exc)
 

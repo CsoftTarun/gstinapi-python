@@ -15,7 +15,7 @@ from .client import (
     is_valid_gstin,
 )
 
-__version__ = "1.0.0"
+__version__ = "1.1.0"
 
 __all__ = [
     "GstinApi",
